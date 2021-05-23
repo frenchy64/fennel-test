@@ -99,7 +99,9 @@ Deep compare values:
      (if suc#
          (assert res#
                  (.. "assertion failed: "
-                     (or ,msg ,(view expr {:one-line? true}))))
+                     (or ,msg ,(view expr {:one-line? true}))
+                     ": "
+                     (tostring res#)))
          (error (.. "in expression: "
                     ,(view expr {:one-line? true}) "
   " res#" \n")))))
@@ -112,7 +114,9 @@ Deep compare values:
      (if suc#
          (assert res#
                  (.. "assertion failed: "
-                     (or ,msg ,(view expr {:one-line? true}))))
+                     (or ,msg ,(view expr {:one-line? true}))
+                     ": "
+                     (tostring res#)))
          (error (.. "in expression: "
                     ,(view expr {:one-line? true}) "
   " res#" \n")))))
