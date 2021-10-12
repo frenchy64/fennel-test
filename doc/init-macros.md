@@ -1,4 +1,4 @@
-# Test.fnl
+# Init-macros.fnl (v0.0.3-dev)
 
 **Table of contents**
 
@@ -13,7 +13,7 @@
 Function signature:
 
 ```
-(deftest name ...)
+(deftest _name ...)
 ```
 
 Simple way of grouping tests with `name`.
@@ -66,7 +66,7 @@ Deep compare values:
 ``` fennel
 (assert-eq [1 {[2 3] [4 5 6]}] [1 {[2 3] [4 5]}])
 ;; => runtime error: equality assertion failed
-;; =>   Left: [1 {[2 3] [4 5 6]}]
+;; =>   Left:  [1 {[2 3] [4 5 6]}]
 ;; =>   Right: [1 {[2 3] [4 5]}]
 ```
 
@@ -107,5 +107,5 @@ Assert `expr` for not truth. Generates more verbose message if
   `msg` is not set. Works the same as [`assert-is`](#assert-is).
 
 
-<!-- Generated with Fenneldoc v0.1.5
+<!-- Generated with Fenneldoc v0.1.7
      https://gitlab.com/andreyorst/fenneldoc -->

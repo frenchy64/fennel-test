@@ -1,5 +1,31 @@
 ;; -*- mode: fennel; -*- vi:ft=fennel
-;; Configuration file for Fenneldoc 0.1.2
+;; Configuration file for Fenneldoc v0.1.7
 ;; https://gitlab.com/andreyorst/fenneldoc
 
-{:mode :doc}
+{:fennel-path {}
+ :function-signatures true
+ :ignored-args-patterns ["%.%.%." "%_" "%_.*"]
+ :inline-references "link"
+ :insert-comment true
+ :insert-copyright true
+ :insert-license true
+ :insert-version true
+ :keys {:copyright "_COPYRIGHT"
+        :description "_DESCRIPTION"
+        :doc-order "_DOC_ORDER"
+        :license "_LICENSE"
+        :module-name "_MODULE_NAME"
+        :version "_VERSION"}
+ :mode "doc"
+ :order "alphabetic"
+ :out-dir "./doc"
+ :project-doc-order {:init-macros.fnl ["deftest"
+                                       "testing"
+                                       "assert-eq"
+                                       "assert-ne"
+                                       "assert-is"
+                                       "assert-not"]}
+ :project-version "v0.0.3-dev"
+ :sandbox true
+ :test-requirements {:init-macros.fnl "(require-macros :init-macros)"}
+ :toc true}
