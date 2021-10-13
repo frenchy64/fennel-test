@@ -36,8 +36,8 @@ Deep compare values:
                       (string.format "(eq %s %s)" s1 s2))]
     `(let [{:eq eq#
             :tostring tostring#} (require ,utils)
-           (lok# left#) (pcall #(do ,expr1))
-           (rok# right#) (pcall #(do ,expr2))]
+           (lok# left#) (pcall (fn [] ,expr1))
+           (rok# right#) (pcall (fn [] ,expr2))]
        (if (not lok#)
            (error (: "in expression:\n%s\n%s\n" :format ,s1 (tostring# left#)))
            (not rok#)
@@ -63,8 +63,8 @@ Deep compare values:
                       (string.format "(not (eq %s %s))" s1 s2))]
     `(let [{:eq eq#
             :tostring tostring#} (require ,utils)
-           (lok# left#) (pcall #(do ,expr1))
-           (rok# right#) (pcall #(do ,expr2))]
+           (lok# left#) (pcall (fn [] ,expr1))
+           (rok# right#) (pcall (fn [] ,expr2))]
        (if (not lok#)
            (error (: "in expression:\n%s\n%s\n" :format ,s1 (tostring# left#)))
            (not rok#)
@@ -87,7 +87,7 @@ Deep compare values:
 (assert-is (= 1 2 3))
 ;; => runtime error: assertion failed for (= 1 2 3)
 ```"
-  `(let [(suc# res#) (pcall #(do ,expr))]
+  `(let [(suc# res#) (pcall (fn [] ,expr))]
      (if suc#
          (do (assert res# (string.format
                            "assertion failed for expression:\n%s\nResult: %s\n%s"
@@ -104,7 +104,7 @@ Deep compare values:
   [expr msg]
   "Assert `expr' for not truth. Generates more verbose message.  Works
 the same as `assert-is'."
-  `(let [(suc# res#) (pcall #(not ,expr))]
+  `(let [(suc# res#) (pcall (fn [] (not ,expr)))]
      (if suc#
          (do (assert res#
                      (string.format
