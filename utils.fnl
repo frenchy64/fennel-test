@@ -1,20 +1,25 @@
 (fn eq [...]
-  "This function is able to compare tables of any depth, even if one of
-the tables uses tables as keys."
+  "Comparison function.
+
+Accepts arbitrary amount of values, and does the deep comparison.  If
+values implement `__eq` metamethod, tries to use it, by checking if
+first value is equal to second value, and the second value is equal to
+the first value.  If values are not equal and are tables does the deep
+comparison.  Tables as keys are supported."
   (match (select "#" ...)
     0 true
     1 true
     2 (let [(a b) ...]
-        (if (rawequal a b)
+        (if (and (= a b) (= b a))
             true
             (= :table (type a) (type b))
             (do (var (res count-a) (values true 0))
                 (each [k v (pairs a) :until (not res)]
-                  (set res (eq v (accumulate [res nil
-                                              k* v (pairs b)
-                                              :until res]
-                                   (when (eq k* k)
-                                     v))))
+                  (set res (eq v (do (var (res done) (values nil nil))
+                                     (each [k* v (pairs b) :until done]
+                                       (when (eq k* k)
+                                         (set (res done) (values v true))))
+                                     res)))
                   (set count-a (+ count-a 1)))
                 (when res
                   (let [count-b (accumulate [res 0 _ _ (pairs b)]
