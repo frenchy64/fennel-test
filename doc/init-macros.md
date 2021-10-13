@@ -89,7 +89,7 @@ Function signature:
 ```
 
 Assert `expr` for truth. Same as inbuilt `assert`, except generates more
-  verbose message if `msg` is not set.
+  verbose message.
 
 ``` fennel
 (assert-is (= 1 2 3))
@@ -103,8 +103,8 @@ Function signature:
 (assert-not expr msg)
 ```
 
-Assert `expr` for not truth. Generates more verbose message if
-  `msg` is not set. Works the same as [`assert-is`](#assert-is).
+Assert `expr` for not truth. Generates more verbose message.  Works
+the same as [`assert-is`](#assert-is).
 
 
 <!-- Generated with Fenneldoc v0.1.7

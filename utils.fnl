@@ -25,4 +25,10 @@ the tables uses tables as keys."
     _ (let [(a b) ...]
         (and (eq a b) (eq (select 2 ...))))))
 
-{: eq}
+(local view
+  (match (pcall require :fennel)
+    (true fennel) #(fennel.view $ {:one-line? true})
+    _ tostring))
+
+{: eq
+ :tostring view}

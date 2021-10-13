@@ -3,6 +3,7 @@
 **Table of contents**
 
 - [`eq`](#eq)
+- [`tostring`](#tostring)
 
 ## `eq`
 Function signature:
@@ -13,6 +14,9 @@ Function signature:
 
 This function is able to compare tables of any depth, even if one of
 the tables uses tables as keys.
+
+## `tostring`
+**Undocumented**
 
 
 <!-- Generated with Fenneldoc v0.1.7

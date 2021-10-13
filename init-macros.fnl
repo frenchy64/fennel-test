@@ -1,9 +1,13 @@
-(local utils (if (= ... :init-macros)
-                 :utils
-                 (or ... :utils)))
+(local utils (if (and ... (not= ... :init-macros))
+                 (.. ... :.utils)
+                 :utils))
 
-(fn assert-eq
-  [expr1 expr2 msg]
+(fn string-len [s]
+  (if (and _G.utf8 _G.utf8.len)
+      (_G.utf8.len s)
+      (length s)))
+
+(fn assert-eq [expr1 expr2 msg]
   "Like `assert', except compares results of `expr1' and `expr2' for equality.
 Generates formatted message if `msg' is not set to other message.
 
@@ -25,54 +29,59 @@ Deep compare values:
 ;; =>   Left:  [1 {[2 3] [4 5 6]}]
 ;; =>   Right: [1 {[2 3] [4 5]}]
 ```"
-  `(let [left# ,expr1
-         right# ,expr2
-         {:eq eq#} (require ,utils)
-         fennel# (require :fennel)
-         (suc# res#) (pcall eq# left# right#)]
-     (if suc#
-         (do (assert res# (string.format
-                           "assertion failed for expression:\n(= %s %s)\n    Left: %s\n   Right: %s\n%s"
-                           ,(view expr1 {:one-line? true})
-                           ,(view expr2 {:one-line? true})
-                           (fennel#.view left# {:one-line? true})
-                           (fennel#.view right# {:one-line? true})
-                           ,(if msg (.. " Message: " msg) "")))
-             nil)
-         (error (string.format "in expression:\n(= %s %s)\n%s\n"
-                               ,(view expr1 {:one-line? true})
-                               ,(view expr2 {:one-line? true})
-                               res#)))))
+  (let [s1 (view expr1 {:one-line? true})
+        s2 (view expr2 {:one-line? true})
+        formatted (if (> (string-len (.. "(eq )" s1 s2)) 80)
+                      (string.format "(eq %s\n    %s)" s1 s2)
+                      (string.format "(eq %s %s)" s1 s2))]
+    `(let [{:eq eq#
+            :tostring tostring#} (require ,utils)
+           (lok# left#) (pcall #(do ,expr1))
+           (rok# right#) (pcall #(do ,expr2))]
+       (if (not lok#)
+           (error (: "in expression:\n%s\n%s\n" :format ,s1 (tostring# left#)))
+           (not rok#)
+           (error (: "in expression:\n%s\n%s\n" :format ,s2 (tostring# right#)))
+           (assert (eq# left# right#)
+                   (string.format
+                    "assertion failed for expression:\n%s\n Left: %s\nRight: %s\n%s"
+                    ,formatted
+                    (tostring# left#)
+                    (tostring# right#)
+                    ,(if msg (.. " Info: " msg) ""))))
+       nil)))
 
 (fn assert-ne
   [expr1 expr2 msg]
   "Assert for unequality.  Like `assert', except compares results of
 `expr1' and `expr2' for equality.  Generates formatted message if
 `msg' is not set to other message.  Same as `assert-eq'."
-  `(let [left# ,expr1
-         right# ,expr2
-         {:eq eq#} (require ,utils)
-         fennel# (require :fennel)
-         (suc# res#) (pcall eq# left# right#)]
-     (if suc#
-         (do (assert (not res#)
-                     (string.format
-                      "assertion failed for expression:\n(not= %s %s)\n    Left: %s\n   Right: %s\n%s"
-                      ,(view expr1 {:one-line? true})
-                      ,(view expr2 {:one-line? true})
-                      (fennel#.view left# {:one-line? true})
-                      (fennel#.view right# {:one-line? true})
-                      ,(if msg (.. " Message: " msg) "")))
-             nil)
-         (error (string.format "in expression:\n(not= %s %s)\n%s\n"
-                               ,(view expr1 {:one-line? true})
-                               ,(view expr2 {:one-line? true})
-                               res#)))))
+  (let [s1 (view expr1 {:one-line? true})
+        s2 (view expr2 {:one-line? true})
+        formatted (if (> (string-len (.. "(not (eq ))" s1 s2)) 80)
+                      (string.format "(not (eq %s\n         %s))" s1 s2)
+                      (string.format "(not (eq %s %s))" s1 s2))]
+    `(let [{:eq eq#
+            :tostring tostring#} (require ,utils)
+           (lok# left#) (pcall #(do ,expr1))
+           (rok# right#) (pcall #(do ,expr2))]
+       (if (not lok#)
+           (error (: "in expression:\n%s\n%s\n" :format ,s1 (tostring# left#)))
+           (not rok#)
+           (error (: "in expression:\n%s\n%s\n" :format ,s2 (tostring# right#)))
+           (assert (not (eq# left# right#))
+                   (string.format
+                    "assertion failed for expression:\n%s\n Left: %s\nRight: %s\n%s"
+                    ,formatted
+                    (tostring# left#)
+                    (tostring# right#)
+                    ,(if msg (.. " Info: " msg) ""))))
+       nil)))
 
 (fn assert-is
   [expr msg]
   "Assert `expr' for truth. Same as inbuilt `assert', except generates more
-  verbose message if `msg' is not set.
+  verbose message.
 
 ``` fennel
 (assert-is (= 1 2 3))
@@ -81,10 +90,10 @@ Deep compare values:
   `(let [(suc# res#) (pcall #(do ,expr))]
      (if suc#
          (do (assert res# (string.format
-                           "assertion failed for expression:\n%s\n  Result: %s\n%s"
+                           "assertion failed for expression:\n%s\nResult: %s\n%s"
                            ,(view expr {:one-line? true})
                            (tostring res#)
-                           ,(if msg (.. " Message: " msg) "")))
+                           ,(if msg (.. "  Info: " msg) "")))
              nil)
          (error (string.format
                  "in expression: %s: %s\n"
@@ -93,16 +102,16 @@ Deep compare values:
 
 (fn assert-not
   [expr msg]
-  "Assert `expr' for not truth. Generates more verbose message if
-  `msg' is not set. Works the same as `assert-is'."
+  "Assert `expr' for not truth. Generates more verbose message.  Works
+the same as `assert-is'."
   `(let [(suc# res#) (pcall #(not ,expr))]
      (if suc#
          (do (assert res#
                      (string.format
-                      "assertion failed for expression:\n(not %s)\n  Result: %s\n%s"
+                      "assertion failed for expression:\n(not %s)\nResult: %s\n%s"
                       ,(view expr {:one-line? true})
                       (tostring res#)
-                      ,(if msg (.. " Message: " msg) "")))
+                      ,(if msg (.. "  Info: " msg) "")))
              nil)
          (error (string.format
                  "in expression: (not %s): %s\n"
