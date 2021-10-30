@@ -48,7 +48,7 @@ Deep compare values:
                     ,formatted
                     (tostring# left#)
                     (tostring# right#)
-                    ,(if msg (.. " Info: " msg) ""))))
+                    ,(if msg `(.. " Info: " (tostring# ,msg)) ""))))
        nil)))
 
 (fn assert-ne
@@ -75,7 +75,7 @@ Deep compare values:
                     ,formatted
                     (tostring# left#)
                     (tostring# right#)
-                    ,(if msg (.. " Info: " msg) ""))))
+                    ,(if msg `(.. " Info: " (tostring# ,msg)) ""))))
        nil)))
 
 (fn assert-is
@@ -87,13 +87,14 @@ Deep compare values:
 (assert-is (= 1 2 3))
 ;; => runtime error: assertion failed for (= 1 2 3)
 ```"
-  `(let [(suc# res#) (pcall (fn [] ,expr))]
+  `(let [{:tostring tostring#} (require ,utils)
+         (suc# res#) (pcall (fn [] ,expr))]
      (if suc#
          (do (assert res# (string.format
                            "assertion failed for expression:\n%s\nResult: %s\n%s"
                            ,(view expr {:one-line? true})
                            (tostring res#)
-                           ,(if msg (.. "  Info: " msg) "")))
+                           ,(if msg `(.. "  Info: " (tostring# ,msg)) "")))
              nil)
          (error (string.format
                  "in expression: %s: %s\n"
@@ -104,14 +105,15 @@ Deep compare values:
   [expr msg]
   "Assert `expr' for not truth. Generates more verbose message.  Works
 the same as `assert-is'."
-  `(let [(suc# res#) (pcall (fn [] (not ,expr)))]
+  `(let [{:tostring tostring#} (require ,utils)
+         (suc# res#) (pcall (fn [] (not ,expr)))]
      (if suc#
          (do (assert res#
                      (string.format
                       "assertion failed for expression:\n(not %s)\nResult: %s\n%s"
                       ,(view expr {:one-line? true})
                       (tostring res#)
-                      ,(if msg (.. "  Info: " msg) "")))
+                      ,(if msg `(.. "  Info: " (tostring# ,msg)) "")))
              nil)
          (error (string.format
                  "in expression: (not %s): %s\n"
@@ -119,7 +121,7 @@ the same as `assert-is'."
                  res#)))))
 
 (fn deftest
-  [_name ...]
+  [name ...]
   "Simple way of grouping tests with `name'.
 
 # Example
@@ -129,11 +131,16 @@ the same as `assert-is'."
   )
 ```
 "
-  `(do ,...))
+  `(let [(_# test-ns#) ...]
+     (fn ,name []
+       ,...)
+     (if (= :table (type test-ns#))
+         (table.insert test-ns# [,(tostring name) ,name])
+         (,name))))
 
 (fn testing
   [description ...]
-  "Print test `description' and run it.
+  "Simply wraps code with a `description'.
 
 # Example
 ``` fennel
@@ -142,12 +149,29 @@ the same as `assert-is'."
   )
 ```
 "
-  `(do (io.stdout:write "testing: " ,description "\n")
-       ,...))
+  (assert-compile (= :string (type description))
+                  "description must be a string"
+                  description)
+  `(do
+     ,...))
+
+(fn use-fixtures [once-each ...]
+  (assert-compile (or (= once-each :once) (= once-each :each))
+                  "Expected :once or :each as first argument"
+                  once-each)
+  `(let [(ns# _# fixtures#) ...
+         once-each# ,once-each]
+     (when (not (. fixtures# once-each# ns#))
+       (tset fixtures# once-each# ns# []))
+     (each [_# fixture# (ipairs ,[...])]
+       (tset fixtures# once-each# ns#
+             (+ 1 (length (. fixtures# once-each# ns#)))
+             fixture#))))
 
 {: deftest
  : testing
  : assert-eq
  : assert-ne
  : assert-is
- : assert-not}
+ : assert-not
+ : use-fixtures}
