@@ -69,6 +69,7 @@
            (fennel.view config.reporter)
            "\nUsing default: dots\n")
           (set config.reporter dots)))
+  (math.randomseed config.seed)
   config)
 
 ;;; Utils
