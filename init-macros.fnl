@@ -36,8 +36,12 @@ Deep compare values:
                       (string.format "(eq %s %s)" s1 s2))]
     `(let [{:eq eq#
             :tostring tostring#} (require ,utils)
-           (lok# left#) (pcall (fn [] ,expr1))
-           (rok# right#) (pcall (fn [] ,expr2))]
+           (lok# left#) ,(if (. (get-scope) :vararg)
+                             `(pcall (fn [...] ,expr1) ...)
+                             `(pcall (fn [] ,expr1)))
+           (rok# right#) ,(if (. (get-scope) :vararg)
+                              `(pcall (fn [...] ,expr2) ...)
+                              `(pcall (fn [] ,expr2)))]
        (if (not lok#)
            (error (: "in expression:\n%s\n%s\n" :format ,s1 (tostring# left#)))
            (not rok#)
@@ -63,8 +67,12 @@ Deep compare values:
                       (string.format "(not (eq %s %s))" s1 s2))]
     `(let [{:eq eq#
             :tostring tostring#} (require ,utils)
-           (lok# left#) (pcall (fn [] ,expr1))
-           (rok# right#) (pcall (fn [] ,expr2))]
+           (lok# left#) ,(if (. (get-scope) :vararg)
+                             `(pcall (fn [...] ,expr1) ...)
+                             `(pcall (fn [] ,expr1)))
+           (rok# right#) ,(if (. (get-scope) :vararg)
+                              `(pcall (fn [...] ,expr2) ...)
+                              `(pcall (fn [] ,expr2)))]
        (if (not lok#)
            (error (: "in expression:\n%s\n%s\n" :format ,s1 (tostring# left#)))
            (not rok#)
@@ -88,7 +96,9 @@ Deep compare values:
 ;; => runtime error: assertion failed for (= 1 2 3)
 ```"
   `(let [{:tostring tostring#} (require ,utils)
-         (suc# res#) (pcall (fn [] ,expr))]
+         (suc# res#) ,(if (. (get-scope) :vararg)
+                          `(pcall (fn [...] ,expr) ...)
+                          `(pcall (fn [] ,expr)))]
      (if suc#
          (do (assert res# (string.format
                            "assertion failed for expression:\n%s\nResult: %s\n%s"
@@ -106,9 +116,11 @@ Deep compare values:
   "Assert `expr' for not truth. Generates more verbose message.  Works
 the same as `assert-is'."
   `(let [{:tostring tostring#} (require ,utils)
-         (suc# res#) (pcall (fn [] (not ,expr)))]
+         (suc# res#) ,(if (. (get-scope) :vararg)
+                          `(pcall (fn [...] ,expr) ...)
+                          `(pcall (fn [] ,expr)))]
      (if suc#
-         (do (assert res#
+         (do (assert (not res#)
                      (string.format
                       "assertion failed for expression:\n(not %s)\nResult: %s\n%s"
                       ,(view expr {:one-line? true})
