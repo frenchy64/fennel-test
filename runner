@@ -2,7 +2,7 @@
 ;; -*- mode: fennel -*-
 
 (local fennel (require :fennel))
-(local config {:seed (tonumber (or (os.getenv "FENNEL_TEST_SEED") (os.time)))
+(local config {:seed (tonumber (or (os.getenv "FENNEL_TEST_SEED") (math.floor (* 1000 (+ (os.time) (os.clock))))))
                :reporter :dots
                :shuffle? true})
 (local tests [])
@@ -17,14 +17,25 @@
    :test-start #nil
    :test-report (fn [ok? test-name msg]
                   (io.stdout:write (if ok? "." "F")))
-   :stats-report #(io.stdout:write "\n")})
+   :stats-report (fn [errors]
+                   (io.stdout:write "\n")
+                   (each [_ [ns test-name message] (ipairs errors)]
+                     (io.stderr:write
+                      "Error in '" ns
+                      "' in test '" test-name "':\n"
+                      message "\n")))})
 
 (local namespaces
   {:ns-start (fn [ns] (io.stdout:write ns ": "))
    :ns-report (fn [ns ok?] (io.stdout:write (if ok? "PASS" "FAIL") "\n"))
    :test-start #nil
    :test-report #nil
-   :stats-report #nil})
+   :stats-report (fn [errors]
+                   (each [_ [ns test-name message] (ipairs errors)]
+                     (io.stderr:write
+                      "Error in '" ns
+                      "' in test '" test-name "':\n"
+                      message "\n")))})
 
 ;;; Configuration
 
@@ -46,17 +57,17 @@
       (= config.reporter :namespaces)
       (set config.reporter namespaces)
       (and (= :table (type config.reporter))
-           (= :function config.reporter.ns-start)
-           (= :function config.reporter.ns-report)
-           (= :function config.reporter.test-start)
-           (= :function config.reporter.test-report)
-           (= :function config.reporter.stats-report))
+           (= :function (type config.reporter.ns-start))
+           (= :function (type config.reporter.ns-report))
+           (= :function (type config.reporter.test-start))
+           (= :function (type config.reporter.test-report))
+           (= :function (type config.reporter.stats-report)))
       nil
       (not= nil config.reporter)
       (do (io.stderr:write
            "Warning: unknown or malformed reporter: "
            (fennel.view config.reporter)
-           "\n Using default: dots\n")
+           "\nUsing default: dots\n")
           (set config.reporter dots)))
   config)
 
@@ -159,33 +170,26 @@
 (fn run-tests []
   (each [_ [ns tests] (ipairs tests)]
     (run-ns-tests ns tests))
-  (config.reporter.stats-report))
+  (config.reporter.stats-report errors))
 
-;;; Stats
+;;; Main script
 
-(fn print-errors []
-  (each [_ [ns test-name message] (ipairs errors)]
-    (io.stderr:write
-     "Error in '" ns
-     "' in test '" test-name "':\n"
-     message "\n")))
+(fn runner []
+  (setup-runner)
 
-(fn print-stats []
-  (io.stdout:write
-   "Test run at " (os.date)
-   ", seed: " config.seed "\n"))
+  (io.stdout:write "Test run at " (os.date) ", seed: " config.seed "\n")
 
-;;; Script
+  (load-tests)
 
-(setup-runner)
-(print-stats)
-(load-tests)
-(setup-fixtures :once)
-(setup-fixtures :each)
-(when config.shuffle?
-  (shuffle-tests))
-(run-tests)
-(print-errors)
+  (setup-fixtures :once)
+  (setup-fixtures :each)
 
-(when (> (length errors) 0)
-  (os.exit 1))
+  (when config.shuffle?
+    (shuffle-tests))
+
+  (run-tests)
+
+  (when (> (length errors) 0)
+    (os.exit 1)))
+
+(runner)

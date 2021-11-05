@@ -12,7 +12,7 @@ FENNELDOC := $(shell command -v fenneldoc)
 
 test: $(FNLTESTS)
 	@echo "Testing on" $$($(LUA) -v) >&2
-	@$(foreach test,$?,$(FENNEL) --lua $(LUA) --correlate $(test) || exit;)
+	@$(FENNEL) --lua $(LUA) runner $(FNLTESTS) || exit;
 # TODO: make possible to test documentation
 # ifdef FENNELDOC
 # 	@fenneldoc --mode check -- $(FNLDOCS) || exit
