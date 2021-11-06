@@ -169,16 +169,20 @@ the same as `assert-is'."
 
 (fn use-fixtures [once-each ...]
   (assert-compile (or (= once-each :once) (= once-each :each))
-                  "Expected :once or :each as first argument"
+                  "Expected :once or :each as the first argument"
                   once-each)
-  `(let [(ns# _# fixtures#) ...
-         once-each# ,once-each]
-     (when (not (. fixtures# once-each# ns#))
-       (tset fixtures# once-each# ns# []))
-     (each [_# fixture# (ipairs ,[...])]
-       (tset fixtures# once-each# ns#
-             (+ 1 (length (. fixtures# once-each# ns#)))
-             fixture#))))
+  `(let [(ns# _# fixtures#) ...]
+     (var once-each# ,once-each)
+     (when (= :table (type fixtures#))
+       (each [_# fixture# (ipairs ,[...])]
+         (if (or (= fixture# :each) (= fixture# :once))
+             (set once-each# fixture#)
+             (do
+               (when (not (. fixtures# once-each# ns#))
+                 (tset fixtures# once-each# ns# []))
+               (tset fixtures# once-each# ns#
+                     (+ 1 (length (. fixtures# once-each# ns#)))
+                     fixture#)))))))
 
 {: deftest
  : testing

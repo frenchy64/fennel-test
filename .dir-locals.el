@@ -15,4 +15,4 @@
                              1 'font-lock-keyword-face))))
                  (eval . (put 'deftest 'fennel-indent-function 'defun))
                  (eval . (put 'testing 'fennel-indent-function 'defun))
-                 (eval . (put 'use-fixtures 'fennel-indent-function 1)))))
+                 (eval . (put 'use-fixtures 'fennel-indent-function 'defun)))))
