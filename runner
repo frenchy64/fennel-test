@@ -8,6 +8,7 @@
 (local tests [])
 (local fixtures {:once {} :each {}})
 (local errors [])
+(local warnings [])
 
 ;;; Reporters
 
@@ -17,8 +18,10 @@
    :test-start #nil
    :test-report (fn [ok? test-name msg]
                   (io.stdout:write (if ok? "." "F")))
-   :stats-report (fn [errors]
+   :stats-report (fn [warnings errors]
                    (io.stdout:write "\n")
+                   (each [_ message (ipairs warnings)]
+                     (io.stderr:write "Warning: " message "\n"))
                    (each [_ [ns test-name message] (ipairs errors)]
                      (io.stderr:write
                       "Error in '" ns
@@ -30,7 +33,9 @@
    :ns-report (fn [ns ok?] (io.stdout:write (if ok? "PASS" "FAIL") "\n"))
    :test-start #nil
    :test-report #nil
-   :stats-report (fn [errors]
+   :stats-report (fn [warnings errors]
+                   (each [_ message (ipairs warnings)]
+                     (io.stderr:write "Warning: " message "\n"))
                    (each [_ [ns test-name message] (ipairs errors)]
                      (io.stderr:write
                       "Error in '" ns
@@ -160,19 +165,21 @@
     (oncef
      (fn []
        (let [eachf (or (. fixtures.each ns) default-fixture)]
-         (each [_ [test-name test-fn] (ipairs tests)]
-           (reporter.test-start ns test-name)
-           (match (with-no-output (pcall eachf test-fn))
-             (false msg) (do (set ok? false)
-                             (reporter.test-report false ns test-name msg)
-                             (table.insert errors [ns test-name msg]))
-             _ (reporter.test-report true ns test-name))))))
+         (if (= 0 (length tests))
+             (table.insert warnings (: "namespace '%s' has no tests" :format ns))
+             (each [_ [test-name test-fn] (ipairs tests)]
+               (reporter.test-start ns test-name)
+               (match (with-no-output (pcall eachf test-fn))
+                 (false msg) (do (set ok? false)
+                                 (reporter.test-report false ns test-name msg)
+                                 (table.insert errors [ns test-name msg]))
+                 _ (reporter.test-report true ns test-name)))))))
     (reporter.ns-report ns ok?)))
 
 (fn run-tests []
   (each [_ [ns tests] (ipairs tests)]
     (run-ns-tests ns tests))
-  (config.reporter.stats-report errors))
+  (config.reporter.stats-report warnings errors))
 
 ;;; Main script
 
