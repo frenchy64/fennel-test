@@ -112,7 +112,7 @@
                                  (write# fd# ...))))
      (let [res# (pack# ,expr)]
        (tset stdout-mt# :write write#)
-       (table.unpack res# 1 res#.n))))
+       ((or table.unpack _G.unpack) res# 1 res#.n))))
 
 ;;; Test loading
 
