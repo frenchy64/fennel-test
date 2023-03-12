@@ -1,4 +1,4 @@
-#!/bin/env fennel
+#!/usr/bin/env fennel
 ;; -*- mode: fennel -*-
 
 (local fennel (require :fennel))
